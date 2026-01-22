@@ -28,6 +28,9 @@ html, body {
     background: transparent !important;
     border: none !important;
 }
+.leaflet-tile {
+    filter: brightness(0.95) contrast(1.1);
+}
 
 #counter {
     background-color: white;
@@ -63,13 +66,13 @@ const map = L.map('map').setView([39.5, -98.35], 4);
 
 
 const lightMap = L.tileLayer(
-    'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-    {
-        attribution: '&copy; OpenStreetMap & CARTO',
-        subdomains: 'abcd',
-        maxZoom: 19
-    }
+  'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+  {
+    attribution: '&copy; Esri',
+    maxZoom: 16
+  }
 );
+
 
 
 lightMap.addTo(map); // pretend user clicked Light mode
