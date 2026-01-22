@@ -6,6 +6,7 @@
 <title>US National Parks Airline Map</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet"/>
 
 <style>
 html, body {
@@ -23,10 +24,25 @@ html, body {
     background: transparent !important;
     border: none !important;
 }
+
+#counter {
+    background-color: white;
+    padding: 60px 20px;
+    text-align: center;
+    font-size: 72px;
+    font-weight: bold;
+    font-family: 'Montserrat', sans-serif;
+    width: 100%;
+    box-sizing: border-box;
+    border-bottom: 2px solid #ddd;
+}
+
 </style>
 </head>
 
 <body>
+    <div id="counter"><span id="airport-count">0</span> Airports & </n><span id="route-count">0</span> Routes, and growing </div>
+    
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -598,6 +614,31 @@ function drawRoute(code1, code2) {
 
 
 routes.forEach(r => drawRoute(r[0], r[1]));
+
+// Counter animation
+const totalAirports = Object.keys(airports).length;
+const totalRoutes = routes.length;
+
+function animateCounter(elementId, targetValue) {
+    const element = document.getElementById(elementId);
+    let current = 0;
+    const increment = Math.ceil(targetValue / 30); // 30 frames
+    
+    const interval = setInterval(() => {
+        current += increment;
+        if (current >= targetValue) {
+            current = targetValue;
+            clearInterval(interval);
+        }
+        element.textContent = current;
+    }, 30);
+}
+
+// Start animations when page loads
+window.addEventListener('load', () => {
+    animateCounter('airport-count', totalAirports);
+    animateCounter('route-count', totalRoutes);
+});
 
 
 // --------------------------------------------------
