@@ -1,4 +1,4 @@
-
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -40,14 +40,7 @@ const map = L.map('map').setView([39.5, -98.35], 4);
 // --------------------------------------------------
 // BASEMAPS
 // --------------------------------------------------
-const darkMap = L.tileLayer(
-    'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    {
-        attribution: '&copy; OpenStreetMap & CARTO',
-        subdomains: 'abcd',
-        maxZoom: 19
-    }
-);
+
 
 const lightMap = L.tileLayer(
     'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
@@ -58,30 +51,6 @@ const lightMap = L.tileLayer(
     }
 );
 
-const satelliteMap = L.tileLayer(
-    'https://server.arcgisonline.com/ArcGIS/rest/services/' +
-    'World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    {
-        attribution: '&copy; Esri & contributors',
-        maxZoom: 19
-    }
-);
-
-
-
-// --------------------------------------------------
-// BASEMAP TOGGLE CONTROL
-// --------------------------------------------------
-const baseMaps = {
-    "Light": lightMap,
-    "Dark": darkMap,
-    "Satellite": satelliteMap
-};
-
-L.control.layers(baseMaps, null, {
-    position: 'topleft',
-    collapsed: true
-}).addTo(map);
 
 lightMap.addTo(map); // pretend user clicked Light mode
 
@@ -168,7 +137,6 @@ CYYC: { lat: 51.1188, lon: -114.0099, name: "Calgary Intl" },
 CYLW: { lat: 49.9561, lon: -119.378, name: "Kelowna Intl" },
 PASI: { lat: 57.0468, lon: -135.3611, name: "Sitka Intl" },
 KBOI: { lat: 43.5644, lon: -116.2229, name: "Boise Air Terminal" },
-KSFB: { lat: 28.7772, lon: -81.2349, name: "Sanford Intl" },
 KPIE: { lat: 27.9082, lon: -82.6865, name: "St. Pete-Clearwater Intl" },
 KMSY: { lat: 29.9933, lon: -90.259, name: "Louis Armstrong New Orleans Intl" },
 KRNO: { lat: 39.4991, lon: -119.7681, name: "Reno/Tahoe Intl" },
@@ -255,50 +223,48 @@ PAPG: { lat: 56.8014, lon: -132.9462, name: "Petersburg James A Johnson" },
     ];
 
     const routes = [
+["KDEN","PHNL"],
+["KDEN","PHTO"],
+["KDEN","PHOG"],
 ["KMDW","PANC"],
 ["PANC","PHNL"],
 ["KMDW","PAFA"],
-["KLAS","PHNL"],
-["KLAS","PHTO"],
 ["KSEA","KFLL"],
-["KLAS","PHOG"],
 ["KSEA","PHTO"],
 ["KSEA","MMUN"],
 ["KSEA","PHNL"],
 ["KSEA","PHOG"],
 ["PHNL","NSTU"],
+["KDEN","MDPC"],
 ["KFLL","CYYC"],
 ["KFLL","KRNO"],
 ["KDEN","MROC"],
 ["KDEN","PANC"],
-["KLAS","PANC"],
 ["KMDW","MROC"],
+["KMDW","TNCM"],
 ["KFLL","KBZN"],
 ["KDEN","MKJS"],
 ["KFLL","KLAS"],
 ["KSEA","KTYS"],
 ["KFLL","KJAC"],
 ["KSEA","KMSY"],
-["KLAS","MMUN"],
+["KMDW","MDPC"],
 ["KDEN","MYNN"],
 ["KFLL","MMSD"],
 ["KDEN","KBGR"],
 ["KMDW","MMSD"],
 ["KMDW","MMPR"],
-["KLAS","KTYS"],
 ["KMDW","KSEA"],
 ["KDEN","KMHT"],
+["KMDW","MKJS"],
 ["KDEN","KFLL"],
-["KLAS","KVPS"],
 ["KMDW","KRNO"],
 ["KDEN","MMUN"],
 ["KMDW","KPSP"],
 ["KDEN","KBTV"],
 ["KFLL","MMPR"],
-["KDEN","KSFB"],
-["KLAS","KMDW"],
+["KSEA","PAFA"],
 ["KDEN","KPIE"],
-["KLAS","KMSY"],
 ["PANC","KSEA"],
 ["KMDW","KBOI"],
 ["KFLL","KBGR"],
@@ -313,13 +279,14 @@ PAPG: { lat: 56.8014, lon: -132.9462, name: "Petersburg James A Johnson" },
 ["KFLL","KMHT"],
 ["KMDW","KEYW"],
 ["KFLL","TNCM"],
-["KLAS","MMPR"],
+["KDEN","KVPS"],
 ["KDEN","KVPS"],
 ["KMDW","KBZN"],
 ["KDEN","MMSD"],
 ["KMDW","KJAC"],
 ["KFLL","KMDW"],
 ["KMDW","KFLL"],
+["KDEN","KTYS"],
 ["KDEN","KTYS"],
 ["KFLL","MROC"],
 ["KMDW","KCNM"],
@@ -329,7 +296,6 @@ PAPG: { lat: 56.8014, lon: -132.9462, name: "Petersburg James A Johnson" },
 ["KFLL","KSTL"],
 ["KSEA","CYXY"],
 ["KFLL","TJSJ"],
-["KLAS","CYYC"],
 ["KFLL","KAKR"],
 ["KDEN","KACV"],
 ["KDEN","KSEA"],
@@ -338,23 +304,24 @@ PAPG: { lat: 56.8014, lon: -132.9462, name: "Petersburg James A Johnson" },
 ["KDEN","CYLW"],
 ["KSEA","KPSP"],
 ["KMDW","KBGR"],
-["KMDW","KSFB"],
+["KDEN","KMFR"],
 ["KDEN","KMFR"],
 ["KSEA","KASE"],
+["KDEN","KMRY"],
 ["KSEA","KRAP"],
-["KLAS","MMSD"],
 ["KSEA","KEGE"],
 ["KFLL","KLIT"],
 ["KDEN","KRDD"],
+["KDEN","KSBA"],
 ["KFLL","MDPC"],
 ["KSEA","KSBA"],
 ["KSEA","PAJN"],
-["KSEA","PAJN"],
 ["KDEN","CYYC"],
+["KDEN","CYYC"],
+["KDEN","KMDW"],
 ["KMDW","KDEN"],
-["KLAS","KSEA"],
 ["KFLL","KCRW"],
-["KLAS","KGPI"],
+["KDEN","KFAT"],
 ["KDEN","KFAT"],
 ["KSEA","KSGU"],
 ["KFLL","KCHO"],
@@ -364,6 +331,7 @@ PAPG: { lat: 56.8014, lon: -132.9462, name: "Petersburg James A Johnson" },
 ["KSEA","KCDC"],
 ["KDEN","KINL"],
 ["KDEN","KRNO"],
+["KDEN","KRNO"],
 ["KDEN","KDLH"],
 ["KMDW","KRAP"],
 ["KMDW","KVPS"],
@@ -372,90 +340,69 @@ PAPG: { lat: 56.8014, lon: -132.9462, name: "Petersburg James A Johnson" },
 ["KDEN","KSTL"],
 ["KMDW","KBTV"],
 ["KDEN","KGPI"],
+["KDEN","KGPI"],
 ["KSEA","KMRY"],
 ["KFLL","MDPP"],
 ["KSEA","KFAT"],
 ["KSEA","KPVU"],
 ["KFLL","KTYS"],
-["KLAS","KBZN"],
 ["KSEA","PAKT"],
-["KLAS","KCNM"],
 ["KFLL","KMSY"],
 ["KMDW","KCAE"],
 ["KDEN","KBOI"],
+["KDEN","KBOI"],
 ["KDEN","KTUS"],
-["KLAS","KWYS"],
+["KDEN","KTUS"],
 ["KDEN","KLAS"],
 ["KSEA","KJAC"],
-["KLAS","KMFR"],
-["KLAS","KACV"],
-["KLAS","KELP"],
 ["KFLL","MBPV"],
-["KLAS","KJAC"],
 ["PANC","PAJN"],
 ["KSEA","KWYS"],
 ["KDEN","KELP"],
 ["KSEA","KRNO"],
 ["KMDW","KCHO"],
 ["KFLL","MMUN"],
+["PANC","PAOT"],
 ["KFLL","KCAE"],
 ["KMDW","KLIT"],
 ["KMDW","KINL"],
 ["KFLL","MKJS"],
 ["KSEA","KBZN"],
-["KFLL","KMYR"],
 ["KDEN","KBZN"],
-["KLAS","KALS"],
+["KDEN","KBZN"],
 ["KDEN","KCNM"],
-["KLAS","KBOI"],
 ["KDEN","KSGU"],
-["KLAS","KEGE"],
 ["KDEN","KFLG"],
-["KLAS","KASE"],
 ["KDEN","KDIK"],
 ["KFLL","KVPS"],
-["KLAS","KRDD"],
 ["KSEA","KRDD"],
 ["KDEN","KCDC"],
-["KFLL","KCHS"],
 ["KDEN","KWYS"],
 ["KMDW","KTYS"],
 ["KSEA","KACV"],
 ["KSEA","CYYC"],
-["KLAS","KMJT"],
-["KLAS","KDRO"],
 ["KMDW","KDLH"],
 ["KDEN","KJAC"],
 ["KMDW","KCRW"],
 ["KSEA","KBOI"],
 ["KSEA","KGPI"],
-["KLAS","KMRY"],
 ["KDEN","KPVU"],
-["KLAS","KTUS"],
 ["KSEA","KMFR"],
-["KLAS","KCNY"],
-["KLAS","KRNO"],
-["KLAS","KPVU"],
 ["KMDW","KAKR"],
 ["KDEN","KRAP"],
 ["PANC","PAGS"],
-["KLAS","KSBA"],
 ["KDEN","KCNY"],
 ["KMDW","KSDF"],
-["KLAS","KFAT"],
 ["PANC","PAFA"],
 ["KMDW","KSTL"],
 ["KDEN","KDRO"],
 ["KSEA","CYLW"],
 ["PAYA","PACV"],
-["KLAS","KFLG"],
-["KFLL","KSFB"],
 ["PAJN","PAYA"],
 ["KDEN","KMJT"],
 ["PASI","PAKT"],
 ["KFLL","MYNN"],
 ["KDEN","KALS"],
-["KLAS","KPSP"],
 ["PHNL","PHTO"],
 ["PACV","PANC"],
 ["KFLL","KEYW"],
@@ -469,11 +416,8 @@ PAPG: { lat: 56.8014, lon: -132.9462, name: "Petersburg James A Johnson" },
 ["PHOG","PHTO"],
 ["PAWG","PAKT"],
 ["PAPG","PAWG"],
-["KSEA","PAFA"],
-["KMDW","MKJS"],
-["KMDW","TNCM"],
-["KMDW","MDPC"],
-["KDEN","MDPC"],
+["KMDW","KLAS"],
+["KSEA","KLAS"],
 ];
     
     const starredAirports = ["KDEN", "KSEA", "KLAS","KMDW","KFLL","PHNL"];
@@ -637,9 +581,9 @@ function drawRoute(code1, code2) {
     }
 
     const line = L.polyline(coords, {
-        color: 'red',
+        color: '#011e69',
         weight: 1,
-        opacity: 0.35
+        opacity: 0.50
     })
     .bindPopup(
         `<b>${code1} → ${code2}</b><br>${distanceNM.toFixed(0)} NM`
@@ -662,7 +606,7 @@ routes.forEach(r => drawRoute(r[0], r[1]));
 for (const code in airports) {
     const a = airports[code];
     const m = L.circleMarker([a.lat, a.lon], {
-        color: 'red',
+        color: '#011e69',
         radius: 4,
         fillOpacity: 0.8,
         opacity: 1
