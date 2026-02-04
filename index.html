@@ -17,22 +17,29 @@
         .header {
             background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
             color: white;
-            padding: 30px 20px;
+            padding: 40px 20px;
             text-align: center;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         
         .header h2 {
-            font-size: 32px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            letter-spacing: 0.5px;
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
         }
         
         .header .stats {
-            font-size: 16px;
-            color: rgba(255, 255, 255, 0.9);
-            font-weight: 400;
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.95);
+            font-weight: 300;
+            letter-spacing: 0.5px;
+        }
+        
+        .header .stats strong {
+            font-weight: 700;
+            font-size: 28px;
         }
         
         .map-container {
@@ -60,6 +67,7 @@
 </head>
 <body>
     <div class="header">
+        <h2>Vistawings Route Network</h2>
         <div class="stats" id="stats">Loading...</div>
     </div>
     
@@ -126,8 +134,8 @@
                 const map_routes = routesData.data || [];
                 
                 // Update stats
-                document.getElementById('stats').textContent = 
-                    `${map_airports.length} Airports | ${map_routes.length} Routes`;
+                document.getElementById('stats').innerHTML = 
+                    `<strong>${map_airports.length}</strong> Airports | <strong>${map_routes.length}</strong> Routes`;
                 
                 console.log('Initializing map...');
                 // Initialize map
@@ -227,9 +235,9 @@
                 const code = ap.ICAO_CODE;
                 const isBase = (ap.IS_BASE == 1 || ap.IS_BASE === true);
                 
-                // Count routes for this airport
+                // Count only departures (routes originating from this airport)
                 const routeCount = map_routes.filter(r => 
-                    r.ORIGIN_ICAO === code || r.DESTINATION_ICAO === code
+                    r.ORIGIN_ICAO === code
                 ).length;
                 
                 const marker = L.circleMarker(
