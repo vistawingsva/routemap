@@ -149,17 +149,18 @@
             });
 
             const allRoutes = map_routes;
+            const routePolylines = [];
 
             // Draw routes
             allRoutes.forEach(function(r) {
                 const o = airports[r.ORIGIN_ICAO];
                 const d = airports[r.DESTINATION_ICAO];
-                if (!o || !d) return;
+                if (!o || !d) { routePolylines.push(null); return; }
 
                 const path = greatCirclePoints(o.lat, o.lon, d.lat, d.lon, 64);
                 const acft = [r.ACFT_TYPE_ICAO_1, r.ACFT_TYPE_ICAO_2, r.ACFT_TYPE_ICAO_3].filter(Boolean).join(', ');
                 
-                L.polyline(path, { 
+                const line = L.polyline(path, { 
                     weight: 1, 
                     opacity: 0.4, 
                     color: '#007bff',
@@ -179,7 +180,13 @@
                     this.setStyle({ weight: 1, opacity: 0.4 });
                 })
                 .addTo(routeLayer);
+                
+                routePolylines.push(line);
             });
+
+            // Track selected airport
+            let selectedAirport = null;
+            const markerRefs = {};
 
             // Draw airport markers
             map_airports.forEach(ap => {
@@ -191,7 +198,7 @@
                     r.ORIGIN_ICAO === code || r.DESTINATION_ICAO === code
                 ).length;
                 
-                L.circleMarker(
+                const marker = L.circleMarker(
                     [ap.LATITUDE, ap.LONGITUDE],
                     { 
                         radius: isBase ? 7 : 5, 
@@ -208,7 +215,13 @@
                     'Routes: ' + routeCount +
                     (isBase ? '<br><span style="color: #28a745;">⭐ Base Airport</span>' : '')
                 )
+                .on('click', function(e) {
+                    L.DomEvent.stopPropagation(e);
+                    handleAirportClick(code);
+                })
                 .addTo(airportLayer);
+                
+                markerRefs[code] = marker;
 
                 L.marker(
                     [ap.LATITUDE, ap.LONGITUDE],
@@ -223,6 +236,73 @@
                         pane: 'labelPane'
                     }
                 ).addTo(labelLayer);
+            });
+            
+            // Helper to get airport's default style
+            function getAirportStyle(code) {
+                const ap = map_airports.find(a => a.ICAO_CODE === code);
+                if (!ap) return { radius: 5, weight: 2, color: '#333', fillColor: '#007bff', fillOpacity: 0.85 };
+                const isBase = (ap.IS_BASE == 1 || ap.IS_BASE === true);
+                return {
+                    radius: isBase ? 7 : 5,
+                    weight: 2,
+                    color: isBase ? '#155724' : '#333',
+                    fillColor: isBase ? '#28a745' : '#007bff',
+                    fillOpacity: 0.85
+                };
+            }
+            
+            // Click handler
+            function handleAirportClick(code) {
+                // Click same airport → clear selection
+                if (code === selectedAirport) {
+                    clearSelection();
+                    return;
+                }
+                
+                // Clear previous selection if any
+                if (selectedAirport) {
+                    markerRefs[selectedAirport].setStyle(getAirportStyle(selectedAirport));
+                }
+                
+                // Set new selection
+                selectedAirport = code;
+                markerRefs[code].setStyle({ 
+                    radius: 9, 
+                    weight: 3, 
+                    color: '#fff', 
+                    fillColor: '#f0ad4e', 
+                    fillOpacity: 1 
+                });
+                
+                // Highlight routes touching this airport
+                routePolylines.forEach(function(line, idx) {
+                    if (!line) return;
+                    const r = allRoutes[idx];
+                    if (r.ORIGIN_ICAO === code || r.DESTINATION_ICAO === code) {
+                        line.setStyle({ weight: 3, opacity: 0.9, color: '#f0ad4e' });
+                        line.bringToFront();
+                    } else {
+                        line.setStyle({ weight: 1, opacity: 0.12, color: '#007bff' });
+                    }
+                });
+            }
+            
+            function clearSelection() {
+                if (selectedAirport) {
+                    markerRefs[selectedAirport].setStyle(getAirportStyle(selectedAirport));
+                    selectedAirport = null;
+                }
+                
+                // Restore all routes to default
+                routePolylines.forEach(function(line) {
+                    if (line) line.setStyle({ weight: 1, opacity: 0.4, color: '#007bff' });
+                });
+            }
+            
+            // Click map background to clear selection
+            map.on('click', function() {
+                clearSelection();
             });
         }
         
