@@ -321,7 +321,7 @@
                 routePolylines.forEach(function(line, idx) {
                     if (!line) return;
                     const r = allRoutes[idx];
-                    if (r.ORIGIN_ICAO === code || r.DESTINATION_ICAO === code) {
+                    if (r.ORIGIN_ICAO === code) {
                         line.setStyle({ weight: 3, opacity: 0.9, color: '#f0ad4e' });
                         line.bringToFront();
                     } else {
