@@ -1,532 +1,217 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>US National Parks Airline Map</title>
-
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet"/>
-
-<style>
-html, body {
-    height: 100%;
-    margin: 0;
-    font-family: 'Montserrat', sans-serif;
-    display: flex;
-    flex-direction: column;
-}
-
-#map {
-    flex: 1;
-    width: 100%;
-}
-.leaflet-interactive {
-    transition: opacity 0.4s ease;
-}
-.leaflet-div-icon {
-    background: transparent !important;
-    border: none !important;
-}
-.leaflet-tile {
-    filter: brightness(0.95) contrast(1.1);
-}
-
-#counter {
-    background-color: white;
-    padding: 60px 20px;
-    text-align: center;
-    font-size: 36px;
-    font-weight: bold;
-    font-family: 'Montserrat', sans-serif;
-    width: 100%;
-    box-sizing: border-box;
-    border-bottom: 2px solid #ddd;
-}
-
-#loading {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    padding: 20px 40px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    z-index: 1000;
-    font-size: 18px;
-}
-
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vistawings Routes Map</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; }
+        
+        .stats {
+            background: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 18px;
+            color: #2c3e50;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .stats strong {
+            color: #007bff;
+            font-size: 24px;
+        }
+        
+        #map-routes { 
+            width: 100% !important; 
+            height: calc(100vh - 70px) !important; 
+            background: #e0e0e0 !important;
+        }
+    </style>
 </head>
-
 <body>
-    <div id="counter"><span id="airport-count">0</span> Airports & <span id="route-count">0</span> Routes</div>
-    <div id="loading">Loading data from API...</div>
-<div id="map"></div>
-
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script>
-
-// API Configuration
-const API_BASE = 'https://vistawingsva.com/db-api.php/';
-
-// --------------------------------------------------
-// MAP
-// --------------------------------------------------
-const map = L.map('map').setView([39.5, -98.35], 4);
-
-// --------------------------------------------------
-// BASEMAPS
-// --------------------------------------------------
-const lightMap = L.tileLayer(
-  'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-  {
-    attribution: '&copy; Esri',
-    maxZoom: 16
-  }
-);
-
-lightMap.addTo(map);
-
-// --------------------------------------------------
-// LAYERS
-// --------------------------------------------------
-const parkLayer   = L.layerGroup().addTo(map);
-const airportLayer= L.layerGroup().addTo(map);
-const routeLayer  = L.layerGroup().addTo(map);
-const labelLayer  = L.layerGroup().addTo(map);
-const parkLinesLayer = L.layerGroup().addTo(map);
-
-// --------------------------------------------------
-// DATA STORAGE
-// --------------------------------------------------
-let airports = {};
-let routes = [];
-const airportMarkers = {};
-const routeLines = [];
-let focusedAirport = null;
-const parkMarkers = [];
-
-const PARK_RADIUS_NM = 150;
-
- const parks = [
-        { name:"Great Smoky Mountains National Park", lat:35.68, lon:-83.53, visitors:12191834, airport:"KTYS" },
-        { name:"Grand Canyon National Park", lat:36.06, lon:-112.14, visitors:4919163, airport:"KPHX" },
-        { name:"Zion National Park", lat:37.3, lon:-113.05, visitors:4549072, airport:"KSGU" },
-        { name:"Yosemite National Park", lat:37.83, lon:-119.5, visitors:4422868, airport:"KFAT" },
-        { name:"Rocky Mountain National Park", lat:40.4, lon:-105.58, visitors:4154349, airport:"KBJC" },
-        { name:"Yellowstone National Park", lat:44.6, lon:-110.5, visitors:4061565, airport:"KJAC" },
-        { name:"Acadia National Park", lat:44.35, lon:-68.21, visitors:3961661, airport:"KBGR" },
-        { name:"Olympic National Park", lat:47.97, lon:-123.5, visitors:3717267, airport:"KSEA" },
-        { name:"Grand Teton National Park", lat:43.73, lon:-110.8, visitors:3628222, airport:"KJAC" },
-        { name:"Glacier National Park", lat:48.8, lon:-114, visitors:3208755, airport:"KGPI" },
-        { name:"Joshua Tree National Park", lat:33.79, lon:-115.9, visitors:2991874, airport:"KPSP" },
-        { name:"Cuyahoga Valley National Park", lat:41.24, lon:-81.55, visitors:2912454, airport:"KAKR" },
-        { name:"Indiana Dunes National Park", lat:41.65, lon:-87.05, visitors:2705209, airport:"KMDW" },
-        { name:"Gateway Arch National Park", lat:38.63, lon:-90.19, visitors:2563052, airport:"KSTL" },
-        { name:"Bryce Canyon National Park", lat:37.57, lon:-112.18, visitors:2498075, airport:"KCDC" },
-        { name:"Hot Springs National Park", lat:34.51, lon:-93.05, visitors:2461812, airport:"KLIT" },
-        { name:"New River Gorge National Park", lat:38.07, lon:-81.08, visitors:1811937, airport:"KCRW" },
-        { name:"Shenandoah National Park", lat:38.53, lon:-78.35, visitors:1720211, airport:"KCHO" },
-        { name:"Mount Rainier National Park", lat:46.85, lon:-121.75, visitors:1620006, airport:"KSEA" },
-        { name:"Arches National Park", lat:38.68, lon:-109.57, visitors:1466528, airport:"KGJT" },
-        { name:"Death Valley National Park", lat:36.24, lon:-116.82, visitors:1440484, airport:"KLAS" },
-        { name:"Hawaiʻi Volcanoes National Park", lat:19.38, lon:-155.2, visitors:1433593, airport:"PHTO" },
-        { name:"Capitol Reef National Park", lat:38.2, lon:-111.17, visitors:1422490, airport:"KCDC" },
-        { name:"Sequoia National Park", lat:36.43, lon:-118.68, visitors:1309573, airport:"KFAT" },
-        { name:"Badlands National Park", lat:43.75, lon:-102.5, visitors:1094245, airport:"KRAP" },
-        { name:"Saguaro National Park", lat:32.25, lon:-110.5, visitors:946369, airport:"KTUS" },
-        { name:"Canyonlands National Park", lat:38.2, lon:-109.93, visitors:818492, airport:"KGJT" },
-        { name:"Mammoth Cave National Park", lat:37.18, lon:-86.1, visitors:747042, airport:"KSDF" },
-        { name:"Everglades National Park", lat:25.32, lon:-80.93, visitors:741983, airport:"KFLL" },
-        { name:"Glacier Bay National Park", lat:58.5, lon:-137, visitors:736282, airport:"PAJN" },
-        { name:"Theodore Roosevelt National Park", lat:46.97, lon:-103.45, visitors:732951, airport:"KDIK" },
-        { name:"Haleakalā National Park", lat:20.72, lon:-156.17, visitors:732477, airport:"PHOG" },
-        { name:"White Sands National Park", lat:32.78, lon:-106.17, visitors:702236, airport:"KELP" },
-        { name:"Kings Canyon National Park", lat:36.8, lon:-118.55, visitors:699389, airport:"KFAT" },
-        { name:"Redwood National Park", lat:41.3, lon:-124, visitors:622883, airport:"KMFR" },
-        { name:"Big Bend National Park", lat:29.25, lon:-103.25, visitors:561458, airport:"KELP" },
-        { name:"Petrified Forest National Park", lat:35.07, lon:-109.78, visitors:559254, airport:"KFLG" },
-        { name:"Biscayne National Park", lat:25.65, lon:-80.08, visitors:512213, airport:"KFLL" },
-        { name:"Crater Lake National Park", lat:42.94, lon:-122.1, visitors:504942, airport:"KMFR" },
-        { name:"Wind Cave National Park", lat:43.57, lon:-103.48, visitors:489399, airport:"KRAP" },
-        { name:"Mesa Verde National Park", lat:37.18, lon:-108.49, visitors:480065, airport:"KCNY" },
-        { name:"Denali National Park", lat:63.33, lon:-150.5, visitors:466227, airport:"PAFA" },
-        { name:"Carlsbad Caverns National Park", lat:32.17, lon:-104.44, visitors:460474, airport:"KCNM" },
-        { name:"Great Sand Dunes National Park", lat:37.73, lon:-105.51, visitors:437661, airport:"KDEN" },
-        { name:"Virgin Islands National Park", lat:18.33, lon:-64.73, visitors:423029, airport:"TIST" },
-        { name:"Kenai Fjords National Park", lat:59.92, lon:-149.65, visitors:419468, airport:"PANC" },
-        { name:"Lassen Volcanic National Park", lat:40.49, lon:-121.51, visitors:357651, airport:"KRDD" },
-        { name:"Pinnacles National Park", lat:36.48, lon:-121.16, visitors:354076, airport:"KMRY" },
-        { name:"Black Canyon of the Gunnison National Park", lat:38.57, lon:-107.72, visitors:335862, airport:"KGJT" },
-        { name:"Channel Islands National Park", lat:34.01, lon:-119.42, visitors:262581, airport:"KSBA" },
-        { name:"Congaree National Park", lat:33.78, lon:-80.78, visitors:242049, airport:"KCAE" },
-        { name:"Guadalupe Mountains National Park", lat:31.92, lon:-104.87, visitors:226134, airport:"KELP" },
-        { name:"Voyageurs National Park", lat:48.5, lon:-92.88, visitors:199030, airport:"KDLH" },
-        { name:"Great Basin National Park", lat:38.98, lon:-114.3, visitors:152068, airport:"KCDC" },
-        { name:"Dry Tortugas National Park", lat:24.63, lon:-82.87, visitors:84873, airport:"KEYW" },
-        { name:"Wrangell–St. Elias National Park", lat:61, lon:-142, visitors:81670, airport:"PANC" },
-        { name:"Katmai National Park", lat:58.5, lon:-155, visitors:36230, airport:"PAGS" },
-        { name:"Isle Royale National Park", lat:48.1, lon:-88.55, visitors:28806, airport:"KDLH" },
-        { name:"National Park of American Samoa", lat:-14.25, lon:-170.68, visitors:22567, airport:"NSTU" },
-        { name:"Lake Clark National Park", lat:60.97, lon:-153.42, visitors:18505, airport:"PANC" },
-        { name:"Kobuk Valley National Park", lat:67.55, lon:-159.28, visitors:17233, airport:"PAOB" },
-        { name:"North Cascades National Park", lat:48.7, lon:-121.2, visitors:16485, airport:"KSEA" },
-        { name:"Gates of the Arctic National Park", lat:67.78, lon:-153.3, visitors:11907, airport:"PAFA" }        
-    ];
-
-// --------------------------------------------------
-// UTILITY FUNCTIONS
-// --------------------------------------------------
-function greatCircleDistanceNM(lat1, lon1, lat2, lon2) {
-    const R = 3440.065;
-    const toRad = d => d * Math.PI / 180;
-
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-
-    const a =
-        Math.sin(dLat / 2) ** 2 +
-        Math.cos(toRad(lat1)) *
-        Math.cos(toRad(lat2)) *
-        Math.sin(dLon / 2) ** 2;
-
-    return 2 * R * Math.asin(Math.sqrt(a));
-}
-
-function findClosestAirport(park) {
-    let closest = null;
-    let minDist = Infinity;
-
-    for (const code in airports) {
-        const a = airports[code];
-        const d = greatCircleDistanceNM(
-            park.lat, park.lon,
-            a.LATITUDE, a.LONGITUDE
-        );
-
-        if (d < minDist) {
-            minDist = d;
-            closest = code;
-        }
-    }
-
-    return { code: closest, distance: minDist };
-}
-
-function parkRadius(visitors) {
-    const minVisitors = 10000;
-    const maxVisitors = 12000000;
-
-    const minArea = 40;
-    const maxArea = 1200;
-
-    const v = Math.min(Math.max(visitors, minVisitors), maxVisitors);
-
-    const area =
-        minArea +
-        ( (v - minVisitors) / (maxVisitors - minVisitors) ) *
-        (maxArea - minArea);
-
-    return Math.sqrt(area / Math.PI);
-}
-
-function animateCounter(elementId, targetValue) {
-    const element = document.getElementById(elementId);
-    let current = 0;
-    const increment = Math.ceil(targetValue / 30);
+    <div class="stats">
+        <div id="stats-display">Loading...</div>
+    </div>
     
-    const interval = setInterval(() => {
-        current += increment;
-        if (current >= targetValue) {
-            current = targetValue;
-            clearInterval(interval);
-        }
-        element.textContent = current;
-    }, 30);
-}
+    <div id="map-routes"></div>
 
-// --------------------------------------------------
-// API CALLS
-// --------------------------------------------------
-async function loadAirports() {
-    try {
-        const response = await fetch(`${API_BASE}?action=airports&limit=1000`);
-        const data = await response.json();
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // ============================================================
+        // CONFIGURATION: Replace these URLs with your API endpoints
+        // ============================================================
+        const API_AIRPORTS_URL = 'https://vistawingsva.com/db-api.php?action=airports';
+        const API_ROUTES_URL = 'https://vistawingsva.com/db-api.php?action=routes&limit=1000';
         
-        if (data.success && data.data) {
-            data.data.forEach(airport => {
-                airports[airport.ICAO_CODE] = airport;
+        // ============================================================
+        // Fetch data from your API
+        // ============================================================
+        async function loadData() {
+            try {
+                const [airportsResponse, routesResponse] = await Promise.all([
+                    fetch(API_AIRPORTS_URL),
+                    fetch(API_ROUTES_URL)
+                ]);
+                
+                const airportsData = await airportsResponse.json();
+                const routesData = await routesResponse.json();
+                
+                const map_airports = airportsData.data || [];
+                const map_routes = routesData.data || [];
+                
+                // Update stats
+                document.getElementById('stats-display').innerHTML = 
+                    `<strong>${map_airports.length}</strong> Airports | <strong>${map_routes.length}</strong> Routes`;
+                
+                // Initialize map
+                initializeMap(map_airports, map_routes);
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('stats-display').textContent = 'Error loading data';
+            }
+        }
+        
+        // ============================================================
+        // Great circle interpolation
+        // ============================================================
+        function greatCirclePoints(lat1, lon1, lat2, lon2, n) {
+            const rad = Math.PI / 180;
+            const φ1 = lat1 * rad, λ1 = lon1 * rad;
+            const φ2 = lat2 * rad, λ2 = lon2 * rad;
+
+            const d = 2 * Math.asin(Math.sqrt(
+                Math.pow(Math.sin((φ2 - φ1) / 2), 2) +
+                Math.cos(φ1) * Math.cos(φ2) * Math.pow(Math.sin((λ2 - λ1) / 2), 2)
+            ));
+
+            if (d < 1e-10) return [[lat1, lon1]];
+
+            const points = [];
+            for (let i = 0; i <= n; i++) {
+                const f = i / n;
+                const A = Math.sin((1 - f) * d) / Math.sin(d);
+                const B = Math.sin(f * d) / Math.sin(d);
+                const x = A * Math.cos(φ1) * Math.cos(λ1) + B * Math.cos(φ2) * Math.cos(λ2);
+                const y = A * Math.cos(φ1) * Math.sin(λ1) + B * Math.cos(φ2) * Math.sin(λ2);
+                const z = A * Math.sin(φ1) + B * Math.sin(φ2);
+                points.push([Math.atan2(z, Math.sqrt(x*x + y*y)) / rad, Math.atan2(y, x) / rad]);
+            }
+            return points;
+        }
+        
+        // ============================================================
+        // Initialize map
+        // ============================================================
+        function initializeMap(map_airports, map_routes) {
+            const map = L.map('map-routes', {
+                center: [39.5, -98.35],
+                zoom: 4,
+                zoomControl: true
             });
-        }
-        return data.data ? data.data.length : 0;
-    } catch (error) {
-        console.error('Error loading airports:', error);
-        return 0;
-    }
-}
+            
+            L.tileLayer(
+                'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+                {
+                    attribution: '&copy; OpenStreetMap & CARTO',
+                    subdomains: 'abcd',
+                    maxZoom: 19
+                }
+            ).addTo(map);
+            
+            const routeLayer = L.layerGroup().addTo(map);
+            const airportLayer = L.layerGroup().addTo(map);
+            const labelLayer = L.layerGroup().addTo(map);
+            
+            // Set pane z-indices
+            map.createPane('routePane');
+            map.getPane('routePane').style.zIndex = 400;
+            map.createPane('airportPane');
+            map.getPane('airportPane').style.zIndex = 450;
+            map.createPane('labelPane');
+            map.getPane('labelPane').style.zIndex = 500;
 
-async function loadRoutes() {
-    try {
-        const response = await fetch(`${API_BASE}?action=routes&limit=1000`);
-        const data = await response.json();
-        
-        if (data.success && data.data) {
-            routes = data.data.map(route => [route.ORIGIN_ICAO, route.DESTINATION_ICAO]);
-        }
-        return data.data ? data.data.length : 0;
-    } catch (error) {
-        console.error('Error loading routes:', error);
-        return 0;
-    }
-}
-
-// --------------------------------------------------
-// RENDERING FUNCTIONS
-// --------------------------------------------------
-function drawRoute(code1, code2) {
-    const a = airports[code1];
-    const b = airports[code2];
-    if (!a || !b) return;
-
-    const toRad = d => d * Math.PI / 180;
-    const toDeg = r => r * 180 / Math.PI;
-
-    const lat1 = toRad(a.LATITUDE);
-    const lon1 = toRad(a.LONGITUDE);
-    const lat2 = toRad(b.LATITUDE);
-    const lon2 = toRad(b.LONGITUDE);
-
-    const d =
-        2 * Math.asin(Math.sqrt(
-            Math.sin((lat2 - lat1) / 2) ** 2 +
-            Math.cos(lat1) * Math.cos(lat2) *
-            Math.sin((lon2 - lon1) / 2) ** 2
-        ));
-
-    const distanceNM = d * 3440.065;
-
-    const steps = 100;
-    const coords = [];
-
-    for (let i = 0; i <= steps; i++) {
-        const f = i / steps;
-
-        const A = Math.sin((1 - f) * d) / Math.sin(d);
-        const B = Math.sin(f * d) / Math.sin(d);
-
-        const x =
-            A * Math.cos(lat1) * Math.cos(lon1) +
-            B * Math.cos(lat2) * Math.cos(lon2);
-        const y =
-            A * Math.cos(lat1) * Math.sin(lon1) +
-            B * Math.cos(lat2) * Math.sin(lon2);
-        const z =
-            A * Math.sin(lat1) +
-            B * Math.sin(lat2);
-
-        const lat = Math.atan2(z, Math.sqrt(x * x + y * y));
-        const lon = Math.atan2(y, x);
-
-        coords.push([toDeg(lat), toDeg(lon)]);
-    }
-
-    const line = L.polyline(coords, {
-        color: '#011e69',
-        weight: 1,
-        opacity: 0.50
-    })
-    .bindPopup(
-        `<b>${code1} → ${code2}</b><br>${distanceNM.toFixed(0)} NM`
-    )
-    .addTo(routeLayer);
-
-    routeLines.push({
-        codes: [code1, code2],
-        line
-    });
-}
-
-function renderAirports() {
-    for (const code in airports) {
-        const a = airports[code];
-        const m = L.circleMarker([a.LATITUDE, a.LONGITUDE], {
-            color: '#011e69',
-            radius: 4,
-            fillOpacity: 0.8,
-            opacity: 1
-        })
-        .bindPopup(`<b>${a.FULL_NAME} (${code})</b>`)
-        .on('click', () => focusAirport(code))
-        .addTo(airportLayer);
-
-        airportMarkers[code] = m;
-    }
-}
-
-function renderRoutes() {
-    routes.forEach(r => drawRoute(r[0], r[1]));
-}
-
-function drawLabels(codes) {
-    labelLayer.clearLayers();
-    codes.forEach(c => {
-        const a = airports[c];
-        if (!a) return;
-        L.marker([a.LATITUDE, a.LONGITUDE], {
-            icon: L.divIcon({
-                html: `<span style="color:white;font-weight:bold;text-shadow:1px 1px 2px #000">${c}</span>`,
-                iconSize: [30,12],
-                iconAnchor: [15,-5]
-            }),
-            interactive:false
-        }).addTo(labelLayer);
-    });
-}
-
-// --------------------------------------------------
-// FOCUS MODE
-// --------------------------------------------------
-function focusAirport(code) {
-    focusedAirport = code;
-
-    const connected = new Set([code]);
-    const airportBounds = [];
-
-    routeLines.forEach(r => {
-        if (r.codes.includes(code)) {
-            connected.add(r.codes[0]);
-            connected.add(r.codes[1]);
-            r.line.setStyle({ opacity: 0.9 }).addTo(routeLayer);
-        } else {
-            r.line.setStyle({ opacity: 0.05 });
-        }
-    });
-
-    for (const c in airportMarkers) {
-        const m = airportMarkers[c];
-        if (connected.has(c)) {
-            m.setStyle({ opacity: 1, fillOpacity: 0.9 });
-            airportBounds.push(m.getLatLng());
-        } else {
-            m.setStyle({ opacity: 0.1, fillOpacity: 0.1 });
-        }
-    }
-
-    parkMarkers.forEach(p => {
-        const d = greatCircleDistanceNM(
-            airports[code].LATITUDE,
-            airports[code].LONGITUDE,
-            p.park.lat,
-            p.park.lon
-        );
-
-        if (d <= PARK_RADIUS_NM) {
-            p.marker.setStyle({ opacity: 1, fillOpacity: 0.8 });
-        } else {
-            p.marker.setStyle({ opacity: 0, fillOpacity: 0 });
-        }
-    });
-
-    parkLinesLayer.clearLayers();
-
-    parkMarkers.forEach(p => {
-        const d = greatCircleDistanceNM(
-            airports[code].LATITUDE,
-            airports[code].LONGITUDE,
-            p.park.lat,
-            p.park.lon
-        );
-
-        if (d <= PARK_RADIUS_NM) {
-            const line = L.polyline([
-                [airports[code].LATITUDE, airports[code].LONGITUDE],
-                [p.park.lat, p.park.lon]
-            ], {
-                color: 'green',
-                weight: 2,
-                opacity: 0.6,
-                dashArray: '4,4'
+            // Airport lookup
+            const airports = {};
+            map_airports.forEach(ap => {
+                airports[ap.ICAO_CODE] = {
+                    lat: ap.LATITUDE,
+                    lon: ap.LONGITUDE,
+                    name: ap.FULL_NAME
+                };
             });
 
-            parkLinesLayer.addLayer(line);
+            // Draw routes
+            map_routes.forEach(function(r) {
+                const o = airports[r.ORIGIN_ICAO];
+                const d = airports[r.DESTINATION_ICAO];
+                if (!o || !d) return;
+
+                const path = greatCirclePoints(o.lat, o.lon, d.lat, d.lon, 64);
+                const acft = [r.ACFT_TYPE_ICAO_1, r.ACFT_TYPE_ICAO_2, r.ACFT_TYPE_ICAO_3].filter(Boolean).join(', ');
+                L.polyline(path, { 
+                    weight: 1, 
+                    opacity: 0.4, 
+                    color: '#007bff',
+                    pane: 'routePane'
+                })
+                .bindPopup(
+                    '<strong>' + r.ORIGIN_ICAO + ' → ' + r.DESTINATION_ICAO + '</strong><br>' +
+                    'Flight ' + r.FLIGHT_NUMBER +
+                    (acft ? '<br>Aircraft: ' + acft : '')
+                )
+                .on('mouseover', function() {
+                    this.setStyle({ weight: 3, opacity: 0.8 });
+                })
+                .on('mouseout', function() {
+                    this.setStyle({ weight: 1, opacity: 0.4 });
+                })
+                .addTo(routeLayer);
+            });
+
+            // Draw airport markers
+            map_airports.forEach(ap => {
+                const code = ap.ICAO_CODE;
+                const isBase = ap.IS_BASE;
+                L.circleMarker(
+                    [ap.LATITUDE, ap.LONGITUDE],
+                    { 
+                        radius: isBase ? 7 : 5, 
+                        weight: 2, 
+                        color: isBase ? '#155724' : '#333', 
+                        fillColor: isBase ? '#28a745' : '#007bff', 
+                        fillOpacity: 0.85,
+                        pane: 'airportPane'
+                    }
+                )
+                .bindPopup(`<strong>${ap.FULL_NAME}</strong><br>ICAO: ${code}${isBase ? '<br><span style="color: #28a745;">⭐ Base Airport</span>' : ''}`)
+                .addTo(airportLayer);
+
+                L.marker(
+                    [ap.LATITUDE, ap.LONGITUDE],
+                    {
+                        icon: L.divIcon({
+                            className: 'airport-label',
+                            html: code,
+                            iconSize: [40, 20],
+                            iconAnchor: [20, -5]
+                        }),
+                        interactive: false,
+                        pane: 'labelPane'
+                    }
+                ).addTo(labelLayer);
+            });
         }
-    });
-
-    drawLabels([...connected]);
-
-    if (airportBounds.length > 0) {
-        let bounds = L.latLngBounds(airportBounds);
-
-        map.flyToBounds(bounds, {
-            padding: [60, 60],
-            animate: true,
-            duration: 1.2
-        });
-    }
-}
-
-// --------------------------------------------------
-// RESET
-// --------------------------------------------------
-map.on('click', () => {
-    if (!focusedAirport) return;
-    focusedAirport = null;
-
-    parkLayer.eachLayer(l => l.setStyle({ opacity:1, fillOpacity:0.8 }));
-
-    for (const c in airportMarkers) {
-        airportMarkers[c].setStyle({ opacity:1, fillOpacity:0.8 });
-    }
-
-    routeLines.forEach(r => r.line.setStyle({ opacity:0.55 }));
-
-    drawLabels(Object.keys(airports));
-
-    map.setView([39.5, -98.35], 4, { animate:true, duration:1.0 });
-    
-    parkMarkers.forEach(p => {
-        p.marker.setStyle({
-            opacity: 1,
-            fillOpacity: 0.8
-        });
-    });
-
-    parkLinesLayer.clearLayers();
-});
-
-// --------------------------------------------------
-// INITIALIZATION
-// --------------------------------------------------
-async function initialize() {
-    try {
-        // Load data from API
-        const airportCount = await loadAirports();
-        const routeCount = await loadRoutes();
-
-        // Render all data
-        renderAirports();
-        renderRoutes();
-
-        // Animate counters
-        animateCounter('airport-count', airportCount);
-        animateCounter('route-count', routeCount);
-
-        // Initial labels
-        drawLabels(Object.keys(airports));
-
-        // Hide loading message
-        document.getElementById('loading').style.display = 'none';
-    } catch (error) {
-        console.error('Initialization error:', error);
-        document.getElementById('loading').innerHTML = 'Error loading data';
-    }
-}
-
-// Start when page loads
-window.addEventListener('load', initialize);
-
-</script>
+        
+        // Load data on page load
+        loadData();
+    </script>
 </body>
 </html>
