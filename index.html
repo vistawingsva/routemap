@@ -179,7 +179,13 @@
             // Draw airport markers
             map_airports.forEach(ap => {
                 const code = ap.ICAO_CODE;
-                const isBase = ap.IS_BASE;
+                const isBase = (ap.IS_BASE == 1 || ap.IS_BASE === true);
+                
+                // Count routes for this airport
+                const routeCount = map_routes.filter(r => 
+                    r.ORIGIN_ICAO === code || r.DESTINATION_ICAO === code
+                ).length;
+                
                 L.circleMarker(
                     [ap.LATITUDE, ap.LONGITUDE],
                     { 
@@ -191,7 +197,12 @@
                         pane: 'airportPane'
                     }
                 )
-                .bindPopup(`<strong>${ap.FULL_NAME}</strong><br>ICAO: ${code}${isBase ? '<br><span style="color: #28a745;">⭐ Base Airport</span>' : ''}`)
+                .bindPopup(
+                    `<strong>${ap.FULL_NAME}</strong><br>` +
+                    `ICAO: ${code}<br>` +
+                    `Routes: ${routeCount}` +
+                    (isBase ? '<br><span style="color: #28a745;">⭐ Base Airport</span>' : '')
+                )
                 .addTo(airportLayer);
 
                 L.marker(
