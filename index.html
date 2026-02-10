@@ -289,26 +289,28 @@
                 
                 Object.keys(markerRefs).forEach(code => {
                     const ref = markerRefs[code];
+                    const markerElement = ref.marker.getElement();
+                    const labelElement = ref.label.getElement();
                     
                     if (zoom <= 12) {
                         // At zoom 12 or lower, only show base airports
                         if (ref.isBase) {
-                            airportLayer.addLayer(ref.marker);
-                            labelLayer.addLayer(ref.label);
+                            if (markerElement) markerElement.style.display = '';
+                            if (labelElement) labelElement.style.display = '';
                         } else {
-                            airportLayer.removeLayer(ref.marker);
-                            labelLayer.removeLayer(ref.label);
+                            if (markerElement) markerElement.style.display = 'none';
+                            if (labelElement) labelElement.style.display = 'none';
                         }
                     } else {
                         // At zoom 13 or higher, show all airports
-                        airportLayer.addLayer(ref.marker);
-                        labelLayer.addLayer(ref.label);
+                        if (markerElement) markerElement.style.display = '';
+                        if (labelElement) labelElement.style.display = '';
                     }
                 });
             }
             
-            // Set initial visibility
-            updateAirportVisibility();
+            // Set initial visibility after a short delay to ensure elements are rendered
+            setTimeout(updateAirportVisibility, 100);
             
             // Update visibility on zoom change
             map.on('zoomend', updateAirportVisibility);
