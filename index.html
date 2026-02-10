@@ -262,9 +262,7 @@
                 })
                 .addTo(airportLayer);
                 
-                markerRefs[code] = marker;
-
-                L.marker(
+                const label = L.marker(
                     [ap.LATITUDE, ap.LONGITUDE],
                     {
                         icon: L.divIcon({
@@ -277,7 +275,43 @@
                         pane: 'labelPane'
                     }
                 ).addTo(labelLayer);
+                
+                markerRefs[code] = { 
+                    marker: marker, 
+                    label: label, 
+                    isBase: isBase 
+                };
             });
+            
+            // Function to update airport visibility based on zoom
+            function updateAirportVisibility() {
+                const zoom = map.getZoom();
+                
+                Object.keys(markerRefs).forEach(code => {
+                    const ref = markerRefs[code];
+                    
+                    if (zoom <= 12) {
+                        // At zoom 12 or lower, only show base airports
+                        if (ref.isBase) {
+                            airportLayer.addLayer(ref.marker);
+                            labelLayer.addLayer(ref.label);
+                        } else {
+                            airportLayer.removeLayer(ref.marker);
+                            labelLayer.removeLayer(ref.label);
+                        }
+                    } else {
+                        // At zoom 13 or higher, show all airports
+                        airportLayer.addLayer(ref.marker);
+                        labelLayer.addLayer(ref.label);
+                    }
+                });
+            }
+            
+            // Set initial visibility
+            updateAirportVisibility();
+            
+            // Update visibility on zoom change
+            map.on('zoomend', updateAirportVisibility);
             
             // Helper to get airport's default style
             function getAirportStyle(code) {
@@ -303,12 +337,12 @@
                 
                 // Clear previous selection if any
                 if (selectedAirport) {
-                    markerRefs[selectedAirport].setStyle(getAirportStyle(selectedAirport));
+                    markerRefs[selectedAirport].marker.setStyle(getAirportStyle(selectedAirport));
                 }
                 
                 // Set new selection
                 selectedAirport = code;
-                markerRefs[code].setStyle({ 
+                markerRefs[code].marker.setStyle({ 
                     radius: 9, 
                     weight: 3, 
                     color: '#fff', 
@@ -331,7 +365,7 @@
             
             function clearSelection() {
                 if (selectedAirport) {
-                    markerRefs[selectedAirport].setStyle(getAirportStyle(selectedAirport));
+                    markerRefs[selectedAirport].marker.setStyle(getAirportStyle(selectedAirport));
                     selectedAirport = null;
                 }
                 
