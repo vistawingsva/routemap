@@ -211,8 +211,7 @@
                     '<strong>' + r.ORIGIN_ICAO + ' → ' + r.DESTINATION_ICAO + '</strong><br>' +
                     'Flight ' + r.FLIGHT_NUMBER +
                     (acft ? '<br>Aircraft: ' + acft : '') +
-                    '<br>Status: ' + r.STATUS +
-                    '<br>Season: ' + r.SEASON
+                    '<br>Status: ' + r.STATUS 
                 )
                 .on('mouseover', function() {
                     this.setStyle({ weight: 3, opacity: 0.8 });
