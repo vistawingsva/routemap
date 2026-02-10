@@ -303,12 +303,12 @@
                 
                 // Clear previous selection if any
                 if (selectedAirport) {
-                    markerRefs[selectedAirport].marker.setStyle(getAirportStyle(selectedAirport));
+                    markerRefs[selectedAirport].setStyle(getAirportStyle(selectedAirport));
                 }
                 
                 // Set new selection
                 selectedAirport = code;
-                markerRefs[code].marker.setStyle({ 
+                markerRefs[code].setStyle({ 
                     radius: 9, 
                     weight: 3, 
                     color: '#fff', 
@@ -331,7 +331,7 @@
             
             function clearSelection() {
                 if (selectedAirport) {
-                    markerRefs[selectedAirport].marker.setStyle(getAirportStyle(selectedAirport));
+                    markerRefs[selectedAirport].setStyle(getAirportStyle(selectedAirport));
                     selectedAirport = null;
                 }
                 
