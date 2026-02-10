@@ -209,9 +209,7 @@
                 })
                 .bindPopup(
                     '<strong>' + r.ORIGIN_ICAO + ' → ' + r.DESTINATION_ICAO + '</strong><br>' +
-                    'Flight ' + r.FLIGHT_NUMBER +
-                    (acft ? '<br>Aircraft: ' + acft : '') +
-                    '<br>Status: ' + r.STATUS 
+                    'Flight ' + r.FLIGHT_NUMBER 
                 )
                 .on('mouseover', function() {
                     this.setStyle({ weight: 3, opacity: 0.8 });
