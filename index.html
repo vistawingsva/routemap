@@ -285,6 +285,21 @@
                 };
             });
             
+            // Helper to get airport's default style
+            function getAirportStyle(code) {
+                const ap = map_airports.find(a => a.ICAO_CODE === code);
+                if (!ap) return { radius: 5, weight: 2, color: '#333', fillColor: '#007bff', fillOpacity: 0.85, opacity: 1 };
+                const isBase = (ap.IS_BASE == 1 || ap.IS_BASE === true);
+                return {
+                    radius: isBase ? 7 : 5,
+                    weight: 2,
+                    color: isBase ? '#155724' : '#333',
+                    fillColor: isBase ? '#28a745' : '#007bff',
+                    fillOpacity: 0.85,
+                    opacity: 1
+                };
+            }
+            
             // Function to update airport visibility based on zoom
             function updateAirportVisibility() {
                 const zoom = map.getZoom();
@@ -292,10 +307,19 @@
                 Object.keys(markerRefs).forEach(code => {
                     const ref = markerRefs[code];
                     
+                    // Don't change visibility of selected airport
+                    if (code === selectedAirport) {
+                        return;
+                    }
+                    
                     if (zoom <= 12) {
                         // At zoom 12 or lower, only show base airports
                         if (ref.isBase) {
-                            ref.marker.setStyle({ opacity: 1, fillOpacity: 0.85 });
+                            const defaultStyle = getAirportStyle(code);
+                            ref.marker.setStyle({ 
+                                opacity: defaultStyle.opacity, 
+                                fillOpacity: defaultStyle.fillOpacity 
+                            });
                             ref.label.setOpacity(1);
                         } else {
                             ref.marker.setStyle({ opacity: 0, fillOpacity: 0 });
@@ -303,7 +327,11 @@
                         }
                     } else {
                         // At zoom 13 or higher, show all airports
-                        ref.marker.setStyle({ opacity: 1, fillOpacity: 0.85 });
+                        const defaultStyle = getAirportStyle(code);
+                        ref.marker.setStyle({ 
+                            opacity: defaultStyle.opacity, 
+                            fillOpacity: defaultStyle.fillOpacity 
+                        });
                         ref.label.setOpacity(1);
                     }
                 });
@@ -314,20 +342,6 @@
             
             // Update visibility on zoom change
             map.on('zoomend', updateAirportVisibility);
-            
-            // Helper to get airport's default style
-            function getAirportStyle(code) {
-                const ap = map_airports.find(a => a.ICAO_CODE === code);
-                if (!ap) return { radius: 5, weight: 2, color: '#333', fillColor: '#007bff', fillOpacity: 0.85 };
-                const isBase = (ap.IS_BASE == 1 || ap.IS_BASE === true);
-                return {
-                    radius: isBase ? 7 : 5,
-                    weight: 2,
-                    color: isBase ? '#155724' : '#333',
-                    fillColor: isBase ? '#28a745' : '#007bff',
-                    fillOpacity: 0.85
-                };
-            }
             
             // Click handler
             function handleAirportClick(code) {
