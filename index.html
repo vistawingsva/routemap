@@ -247,6 +247,7 @@
                         color: isBase ? '#155724' : '#333', 
                         fillColor: isBase ? '#28a745' : '#007bff', 
                         fillOpacity: 0.85,
+                        opacity: 1,
                         pane: 'airportPane'
                     }
                 )
@@ -272,7 +273,8 @@
                             iconAnchor: [20, -5]
                         }),
                         interactive: false,
-                        pane: 'labelPane'
+                        pane: 'labelPane',
+                        opacity: 1
                     }
                 ).addTo(labelLayer);
                 
@@ -289,28 +291,26 @@
                 
                 Object.keys(markerRefs).forEach(code => {
                     const ref = markerRefs[code];
-                    const markerElement = ref.marker.getElement();
-                    const labelElement = ref.label.getElement();
                     
                     if (zoom <= 12) {
                         // At zoom 12 or lower, only show base airports
                         if (ref.isBase) {
-                            if (markerElement) markerElement.style.display = '';
-                            if (labelElement) labelElement.style.display = '';
+                            ref.marker.setStyle({ opacity: 1, fillOpacity: 0.85 });
+                            ref.label.setOpacity(1);
                         } else {
-                            if (markerElement) markerElement.style.display = 'none';
-                            if (labelElement) labelElement.style.display = 'none';
+                            ref.marker.setStyle({ opacity: 0, fillOpacity: 0 });
+                            ref.label.setOpacity(0);
                         }
                     } else {
                         // At zoom 13 or higher, show all airports
-                        if (markerElement) markerElement.style.display = '';
-                        if (labelElement) labelElement.style.display = '';
+                        ref.marker.setStyle({ opacity: 1, fillOpacity: 0.85 });
+                        ref.label.setOpacity(1);
                     }
                 });
             }
             
-            // Set initial visibility after a short delay to ensure elements are rendered
-            setTimeout(updateAirportVisibility, 100);
+            // Set initial visibility
+            updateAirportVisibility();
             
             // Update visibility on zoom change
             map.on('zoomend', updateAirportVisibility);
